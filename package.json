@@ -1,0 +1,25 @@
+{
+  "name": "internet-drum-pattern-maker",
+  "version": "1.0.0",
+  "description": "An Internet Drum Pattern creator made with web technology.",
+  "scripts": {
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/internetofdrums/internet-drum-pattern-maker.git"
+  },
+  "author": "Piet van Dongen",
+  "contributors": [
+    "Piet van Dongen"
+  ],
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/internetofdrums/internet-drum-pattern-maker/issues"
+  },
+  "homepage": "https://github.com/internetofdrums/internet-drum-pattern-maker#readme",
+  "devDependencies": {},
+  "dependencies": {
+    "reset-css": "^2.2.1"
+  }
+}
