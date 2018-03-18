@@ -1,9 +1,8 @@
 const path = require('path');
-const webpack = require('webpack');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-function resolve (dir) {
+function resolve(dir) {
   return path.join(__dirname, '..', dir)
 }
 
@@ -27,7 +26,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: 'src/index.html',
       inject: true
-    })
+    }),
   ],
   module: {
     rules: [
@@ -60,6 +59,12 @@ module.exports = {
             presets: ['env']
           }
         }
+      }, {
+        test: /\.(png|ico|xml|svg|webmanifest)$/,
+        loader:'file-loader?name=[name].[ext]',
+        include: [
+          path.resolve(__dirname, './src/favicon')
+        ],
       },
       {
         test: /\.(svg)$/,
@@ -74,7 +79,7 @@ module.exports = {
             }
           }
         ]
-      }
+      },
     ]
   }
 };
