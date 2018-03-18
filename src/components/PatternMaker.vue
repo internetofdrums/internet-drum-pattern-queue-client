@@ -1,55 +1,78 @@
 <template>
-  <form>
-    <div class="pattern">
-      <div class="row">
-        <button
-          @click="clear($event)"
-          type="reset">
-          Clear
-        </button>
-
-        <button
-          @click="submit($event)"
-          type="submit">
-          Submit
-        </button>
-      </div>
-
-      <div class="row">
-        <div class="cell text-cell"></div>
-        <div
-          v-for="index in numberOfNotes"
-          :key="index"
-          class="cell text-cell">
-          {{ index }}
-        </div>
-      </div>
-
-      <div
-        class="row instrument"
-        v-for="(instrument, instrumentIndex) in pattern"
-        :key="instrument.id">
-        <div class="cell text-cell">
-          Instrument {{ instrumentIndex + 1 }}
-        </div>
-
-        <div
-          v-for="(note, noteIndex) in instrument.notes"
-          :key="note.id"
-          :class="'cell note bar-' + note.bar">
-          <input
-            v-model="note.on"
-            :id="'note-' + instrumentIndex + '-' + noteIndex"
-            type="checkbox"/>
-
-          <label
-            :for="'note-' + instrumentIndex + '-' + noteIndex">
-            <span>Instrument {{ instrumentIndex }}, note {{ noteIndex }}</span>
-          </label>
-        </div>
+  <div
+    :class="{ 'overlay-active': overlayActive }"
+    class="pattern-maker">
+    <div
+      @click="hideOverlay()"
+      class="overlay">
+      <div class="overlay-message">
+        {{ overlayMessage }}
       </div>
     </div>
-  </form>
+
+    <form>
+      <div class="pattern">
+        <div class="row header-row">
+          <div class="logo"></div>
+
+          <input
+            v-model="name"
+            :pattern="validNameRegularExpressionString"
+            type="text"
+            placeholder="Name"
+            required
+            maxlength="32"/>
+
+          <button
+            @click="submit($event)"
+            :disabled="!dataIsValid()"
+            type="submit">
+            Submit
+          </button>
+
+          <button
+            @click="reset($event)"
+            type="reset">
+            Reset
+          </button>
+        </div>
+
+        <div class="row">
+          <div class="cell text-cell"></div>
+          <div
+            v-for="index in numberOfNotes"
+            :key="index"
+            class="cell text-cell">
+            {{ index }}
+          </div>
+        </div>
+
+        <div
+          class="row instrument"
+          v-for="(instrument, instrumentIndex) in pattern"
+          :key="instrument.id">
+          <div class="cell text-cell">
+            Instrument {{ instrumentIndex + 1 }}
+          </div>
+
+          <div
+            v-for="(note, noteIndex) in instrument.notes"
+            :key="note.id"
+            :class="'cell note bar-' + note.bar">
+            <input
+              v-model="note.on"
+              :id="'note-' + instrumentIndex + '-' + noteIndex"
+              type="checkbox"/>
+
+            <label
+              :for="'note-' + instrumentIndex + '-' + noteIndex">
+              <span>Instrument {{ instrumentIndex }}, note {{ noteIndex }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
 </template>
 
 <script>
@@ -60,6 +83,11 @@ const numberOfInstrumentsToOmmit = 4
 const numberOfBarsPerInstrument = 4
 const numberOfNotesPerBar = 4
 const numberOfDataPartsPerNote = 2
+const numberOfBytesInData = numberOfInstruments * numberOfBarsPerInstrument * numberOfNotesPerBar * numberOfDataPartsPerNote
+const validNameRegularExpressionString = '^[a-zA-Z0-9 ]+$'
+const validNameRegularExpression = RegExp(validNameRegularExpressionString)
+
+let showOverlayTimeout
 
 function initPattern () {
   let instruments = []
@@ -84,60 +112,117 @@ function initPattern () {
   return instruments
 }
 
+function convertPatternToByteArray (pattern) {
+  let ByteArray = new Uint8Array(numberOfBytesInData)
+  let i = 0
+
+  pattern.forEach(instrument => {
+    instrument.notes.forEach(note => {
+      // Note length is always 100%
+      ByteArray[i] = (note.on === true ? 0x7F : 0x00)
+
+      // Velocity is always 100%
+      ByteArray[i + 1] = (note.on === true ? 0x7F : 0x00)
+
+      i = i + 2
+    })
+  })
+
+  return ByteArray
+}
+
+function convertByteArrayToBase64EncodedString (byteArray) {
+  return btoa(String.fromCharCode(...new Uint8Array(byteArray)))
+}
+
+async function postPattern (name, encodedPattern) {
+  let request = new Request('http://localhost:8080/1.0/patterns/', {
+    method: 'POST',
+    body: JSON.stringify({
+      'name': name,
+      'pattern': encodedPattern
+    })
+  })
+
+  let response
+
+  try {
+    response = await fetch(request)
+  } catch (error) {
+    throw Error('Could not reach the drum pattern queue service :(')
+  }
+
+  if (response.status === 201) {
+    return
+  }
+
+  let json = await response.json()
+
+  if (json && json.message) {
+    throw Error(json.message)
+  }
+}
+
 export default {
   name: 'PatternMaker',
   data: function () {
     return {
+      overlayActive: false,
+      overlayMessage: '',
       numberOfNotes: numberOfBarsPerInstrument * numberOfNotesPerBar,
-      pattern: initPattern()
+      name: '',
+      pattern: initPattern(),
+      validNameRegularExpressionString: validNameRegularExpressionString
     }
   },
   methods: {
-    clear: function (event) {
+    dataIsValid () {
+      return this.name !== '' && validNameRegularExpression.test(this.name)
+    },
+    showOverlay (message) {
+      this.overlayActive = true
+      this.overlayMessage = message
+    },
+    showOverlayTemporarily (message) {
+      clearTimeout(showOverlayTimeout)
+      this.showOverlay(message)
+
+      showOverlayTimeout = setTimeout(() => {
+        this.overlayActive = false
+      }, 3000)
+    },
+    hideOverlay () {
+      this.overlayActive = false
+    },
+    submit: async function (event) {
       event.preventDefault()
 
+      if (!this.dataIsValid()) {
+        this.showOverlayTemporarily('Please enter a valid name for your drum pattern :)')
+        return
+      }
+
+      this.showOverlay('Sending…')
+
+      let byteArray = convertPatternToByteArray(this.pattern)
+      let encodedPattern = convertByteArrayToBase64EncodedString(byteArray)
+
+      try {
+        await postPattern(this.name, encodedPattern)
+        this.showOverlayTemporarily('Your drum pattern was added to the queue :)')
+      } catch (error) {
+        this.showOverlayTemporarily(error.message)
+      }
+    },
+    reset: function (event) {
+      event.preventDefault()
+
+      this.name = ''
       this.pattern.forEach(instrument => {
         instrument.notes.forEach(note => {
           Vue.set(note, 'on', false)
         })
       })
-    },
-    submit: async function (event) {
-      event.preventDefault()
-
-      console.log(this.pattern)
-
-      let numberOfBytesInData = numberOfInstruments * numberOfBarsPerInstrument * numberOfNotesPerBar * numberOfDataPartsPerNote
-      let data = new Uint8Array(numberOfBytesInData)
-      let i = 0
-
-      this.pattern.forEach(instrument => {
-        instrument.notes.forEach(note => {
-          data[i] = (note.on === true ? 0x7F : 0x00) // Note length is always 100%
-          data[i + 1] = (note.on === true ? 0x7F : 0x00) // Velocity is always 100%
-          i = i + 2
-        })
-      })
-
-      console.log(data)
-
-      let encodedData = btoa(String.fromCharCode(...new Uint8Array(data)))
-
-      console.log(encodedData)
-
-      let request = new Request('http://localhost:8080/1.0/patterns/', {
-        method: 'POST',
-        body: JSON.stringify({
-          'name': 'Piet',
-          'pattern': encodedData
-        })
-      })
-
-      try {
-        return await fetch(request)
-      } catch (e) {
-        console.error(e)
-      }
     }
   }
 }
@@ -154,15 +239,86 @@ export default {
     }
   }
 
+  .pattern-maker {
+    height: 100%;
+  }
+
+  .overlay-active .overlay {
+    visibility: visible;
+  }
+
+  .overlay {
+    align-items: center;
+    background: transparentize(#000, 0.8);
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    position: absolute;
+    left: 0;
+    top: 0;
+    visibility: hidden;
+    width: 100vw;
+    z-index: 10;
+  }
+
+  .overlay-message {
+    align-items: center;
+    background: #fff;
+    border-radius: 5px;
+    box-sizing: border-box;
+    display: flex;
+    font-size: 1.5rem;
+    font-weight: bold;
+    justify-content: center;
+    margin: 2rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
   form {
+    box-sizing: border-box;
     display: grid;
     height: 100%;
+    padding: 3rem;
+  }
+
+  input[type=text],
+  button {
+    border-radius: 5px;
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  input[type=text] {
+    background: transparent;
+    border: 2px solid #efefef;
+    padding: 0.25rem 0.5rem;
+  }
+
+  input:invalid {
+    color: red;
+  }
+
+  button {
+    background: #efefef;
+    border: 0;
+    padding: 0;
+  }
+
+  button:hover {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    color: lighten(#000, 67%);
+    background: transparent;
   }
 
   .pattern {
     display: grid;
     grid-row-gap: 5px;
-    grid-template-rows: repeat(14, 1fr);
+    grid-template-rows: repeat(14, minmax(1rem, 1fr));
     padding: 5px;
   }
 
@@ -170,6 +326,10 @@ export default {
     display: grid;
     grid-column-gap: 5px;
     grid-template-columns: repeat(17, minmax(1rem, 1fr));
+  }
+
+  .header-row {
+    grid-template-columns: minmax(1rem, 1fr) minmax(1rem, 12fr) minmax(1rem, 2fr) minmax(1rem, 2fr);
   }
 
   .cell {
@@ -180,7 +340,21 @@ export default {
 
   .text-cell {
     align-self: center;
+    color: lighten(#000, 50%);
+    font-size: 0.75rem;
     text-align: center;
+  }
+
+  .instrument .text-cell {
+    text-align: right;
+  }
+
+  .text-cell:nth-child(2),
+  .text-cell:nth-child(6),
+  .text-cell:nth-child(10),
+  .text-cell:nth-child(14) {
+    color: lighten(#000, 33%);
+    font-weight: bold;
   }
 
   .note input {

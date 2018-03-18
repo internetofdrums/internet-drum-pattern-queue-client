@@ -23,11 +23,7 @@ module.exports = merge(common, {
       {
         test: /\.scss$/,
         use: ExtractTextPlugin.extract({
-          use: [{
-            loader: 'css-loader'
-          }, {
-            loader: 'sass-loader'
-          }]
+          use: ['css-loader', 'sass-loader', 'postcss-loader']
         })
       }
     ]

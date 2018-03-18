@@ -21,7 +21,14 @@ export default {
   }
 
   body {
-    font-family: 'Source Sans Pro', sans-serif;
+    background: #fff;
+    color: #000;
     font-size: 14px;
+  }
+
+  body,
+  input,
+  button {
+    font-family: 'Source Sans Pro', sans-serif;
   }
 </style>
