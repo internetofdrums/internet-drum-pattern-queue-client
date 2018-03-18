@@ -12,3 +12,11 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+  @import "~reset-css/_reset";
+
+  html, body {
+    height: 100%;
+  }
+</style>

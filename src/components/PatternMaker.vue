@@ -102,3 +102,98 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+  @keyframes circle-grow {
+    from {
+      clip-path: circle(0% at 50% 50%);
+    }
+
+    to {
+      clip-path: circle(100% at 50% 50%);
+    }
+  }
+
+  form {
+    display: grid;
+    height: 100%;
+  }
+
+  .pattern {
+    display: grid;
+    grid-row-gap: 5px;
+    grid-template-rows: repeat(12, 1fr);
+    padding: 5px;
+  }
+
+  .instrument {
+    display: grid;
+    grid-column-gap: 5px;
+    grid-template-columns: repeat(16, 1fr);
+  }
+
+  .note {
+    position: relative;
+  }
+
+  .note input {
+    visibility: hidden;
+  }
+
+  .note label {
+    background: #efefef;
+    border-radius: 5px;
+    display: block;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+
+  .note label:hover {
+    cursor: pointer;
+  }
+
+  .note label:after {
+    background: #243bf3;
+    border-radius: 5px;
+    clip-path: circle(0 at 50% 50%);
+    content: '';
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+
+  .bar-2 label:after {
+    background: #705ff2;
+  }
+
+  .bar-3 label:after {
+    background: #a379f0;
+  }
+
+  .bar-4 label:after {
+    background: #c994f0;
+  }
+
+  .note input:not(:checked) + label:hover::after {
+    clip-path: none;
+    opacity: 0.2;
+  }
+
+  .note input:checked + label:after {
+    animation: 0.25s circle-grow;
+    clip-path: circle(100% at 50% 50%);
+  }
+
+  .note label span {
+    visibility: hidden;
+  }
+
+  button {
+    position: absolute;
+  }
+</style>
