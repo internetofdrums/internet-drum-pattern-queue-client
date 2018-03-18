@@ -210,7 +210,8 @@ export default {
 
       try {
         await postPattern(this.name, encodedPattern)
-        this.showOverlayTemporarily('Your drum pattern was added to the queue :)')
+        this.showOverlayTemporarily(`Your drum pattern named '${this.name}' was added to the queue :)`)
+        this.reset(event)
       } catch (error) {
         this.showOverlayTemporarily(error.message)
       }
