@@ -137,7 +137,7 @@ function convertByteArrayToBase64EncodedString (byteArray) {
 }
 
 async function postPattern (name, encodedPattern) {
-  let request = new Request('http://localhost:8080/1.0/patterns/', {
+  let request = new Request(process.env.API_URL + '/patterns', {
     method: 'POST',
     body: JSON.stringify({
       'name': name,

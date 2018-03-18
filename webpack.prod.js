@@ -9,7 +9,8 @@ module.exports = merge(common, {
   devtool: 'source-map',
   plugins: [
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('production')
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.API_URL': JSON.stringify('http://api.internetofdrums.com/1.0')
     }),
     new UglifyJSPlugin({
       sourceMap: true
