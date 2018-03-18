@@ -32,7 +32,8 @@
 
           <button
             @click="reset($event)"
-            type="reset">
+            type="reset"
+            class="reset">
             Reset
           </button>
         </div>
@@ -76,156 +77,156 @@
 </template>
 
 <script>
-  import Vue from 'vue'
+import Vue from 'vue'
 
-  const numberOfInstruments = 16
-  const numberOfInstrumentsToOmmit = 4
-  const numberOfBarsPerInstrument = 4
-  const numberOfNotesPerBar = 4
-  const numberOfDataPartsPerNote = 2
-  const numberOfBytesInData = numberOfInstruments * numberOfBarsPerInstrument * numberOfNotesPerBar * numberOfDataPartsPerNote
-  const validNameRegularExpressionString = '^[a-zA-Z0-9 ]+$'
-  const validNameRegularExpression = RegExp(validNameRegularExpressionString)
+const numberOfInstruments = 16
+const numberOfInstrumentsToOmmit = 4
+const numberOfBarsPerInstrument = 4
+const numberOfNotesPerBar = 4
+const numberOfDataPartsPerNote = 2
+const numberOfBytesInData = numberOfInstruments * numberOfBarsPerInstrument * numberOfNotesPerBar * numberOfDataPartsPerNote
+const validNameRegularExpressionString = '^[a-zA-Z0-9 ]+$'
+const validNameRegularExpression = RegExp(validNameRegularExpressionString)
 
-  let showOverlayTimeout
+let showOverlayTimeout
 
-  function initPattern() {
-    let instruments = []
+function initPattern () {
+  let instruments = []
 
-    for (let i = 0; i < numberOfInstruments - numberOfInstrumentsToOmmit; i++) {
-      let notes = []
+  for (let i = 0; i < numberOfInstruments - numberOfInstrumentsToOmmit; i++) {
+    let notes = []
 
-      for (let j = 0; j < numberOfBarsPerInstrument * numberOfNotesPerBar; j++) {
-        notes.push({
-          id: i + '.' + j,
-          bar: Math.floor(j / numberOfBarsPerInstrument) + 1,
-          on: false
-        })
+    for (let j = 0; j < numberOfBarsPerInstrument * numberOfNotesPerBar; j++) {
+      notes.push({
+        id: i + '.' + j,
+        bar: Math.floor(j / numberOfBarsPerInstrument) + 1,
+        on: false
+      })
+    }
+
+    instruments.push({
+      id: i,
+      notes: notes
+    })
+  }
+
+  return instruments
+}
+
+function convertPatternToByteArray (pattern) {
+  let ByteArray = new Uint8Array(numberOfBytesInData)
+  let i = 0
+
+  pattern.forEach(instrument => {
+    instrument.notes.forEach(note => {
+      // Note length is always 100%
+      ByteArray[i] = (note.on === true ? 0x7F : 0x00)
+
+      // Velocity is always 100%
+      ByteArray[i + 1] = (note.on === true ? 0x7F : 0x00)
+
+      i = i + 2
+    })
+  })
+
+  return ByteArray
+}
+
+function convertByteArrayToBase64EncodedString (byteArray) {
+  return btoa(String.fromCharCode(...new Uint8Array(byteArray)))
+}
+
+async function postPattern (name, encodedPattern) {
+  let request = new Request('http://localhost:8080/1.0/patterns/', {
+    method: 'POST',
+    body: JSON.stringify({
+      'name': name,
+      'pattern': encodedPattern
+    })
+  })
+
+  let response
+
+  try {
+    response = await fetch(request)
+  } catch (error) {
+    throw Error('Could not reach the drum pattern queue service :(')
+  }
+
+  if (response.status === 201) {
+    return
+  }
+
+  let json = await response.json()
+
+  if (json && json.message) {
+    throw Error(json.message)
+  }
+}
+
+export default {
+  name: 'PatternMaker',
+  data: function () {
+    return {
+      overlayActive: false,
+      overlayMessage: '',
+      numberOfNotes: numberOfBarsPerInstrument * numberOfNotesPerBar,
+      name: '',
+      pattern: initPattern(),
+      validNameRegularExpressionString: validNameRegularExpressionString
+    }
+  },
+  methods: {
+    dataIsValid () {
+      return this.name !== '' && validNameRegularExpression.test(this.name)
+    },
+    showOverlay (message) {
+      this.overlayActive = true
+      this.overlayMessage = message
+    },
+    showOverlayTemporarily (message) {
+      clearTimeout(showOverlayTimeout)
+      this.showOverlay(message)
+
+      showOverlayTimeout = setTimeout(() => {
+        this.overlayActive = false
+      }, 3000)
+    },
+    hideOverlay () {
+      this.overlayActive = false
+    },
+    submit: async function (event) {
+      event.preventDefault()
+
+      if (!this.dataIsValid()) {
+        this.showOverlayTemporarily('Please enter a valid name for your drum pattern :)')
+        return
       }
 
-      instruments.push({
-        id: i,
-        notes: notes
-      })
-    }
+      this.showOverlay('Sending…')
 
-    return instruments
-  }
+      let byteArray = convertPatternToByteArray(this.pattern)
+      let encodedPattern = convertByteArrayToBase64EncodedString(byteArray)
 
-  function convertPatternToByteArray(pattern) {
-    let ByteArray = new Uint8Array(numberOfBytesInData)
-    let i = 0
-
-    pattern.forEach(instrument => {
-      instrument.notes.forEach(note => {
-        // Note length is always 100%
-        ByteArray[i] = (note.on === true ? 0x7F : 0x00)
-
-        // Velocity is always 100%
-        ByteArray[i + 1] = (note.on === true ? 0x7F : 0x00)
-
-        i = i + 2
-      })
-    })
-
-    return ByteArray
-  }
-
-  function convertByteArrayToBase64EncodedString(byteArray) {
-    return btoa(String.fromCharCode(...new Uint8Array(byteArray)))
-  }
-
-  async function postPattern(name, encodedPattern) {
-    let request = new Request('http://localhost:8080/1.0/patterns/', {
-      method: 'POST',
-      body: JSON.stringify({
-        'name': name,
-        'pattern': encodedPattern
-      })
-    })
-
-    let response
-
-    try {
-      response = await fetch(request)
-    } catch (error) {
-      throw Error('Could not reach the drum pattern queue service :(')
-    }
-
-    if (response.status === 201) {
-      return
-    }
-
-    let json = await response.json()
-
-    if (json && json.message) {
-      throw Error(json.message)
-    }
-  }
-
-  export default {
-    name: 'PatternMaker',
-    data: function () {
-      return {
-        overlayActive: false,
-        overlayMessage: '',
-        numberOfNotes: numberOfBarsPerInstrument * numberOfNotesPerBar,
-        name: '',
-        pattern: initPattern(),
-        validNameRegularExpressionString: validNameRegularExpressionString
+      try {
+        await postPattern(this.name, encodedPattern)
+        this.showOverlayTemporarily('Your drum pattern was added to the queue :)')
+      } catch (error) {
+        this.showOverlayTemporarily(error.message)
       }
     },
-    methods: {
-      dataIsValid() {
-        return this.name !== '' && validNameRegularExpression.test(this.name)
-      },
-      showOverlay(message) {
-        this.overlayActive = true
-        this.overlayMessage = message
-      },
-      showOverlayTemporarily(message) {
-        clearTimeout(showOverlayTimeout)
-        this.showOverlay(message)
+    reset: function (event) {
+      event.preventDefault()
 
-        showOverlayTimeout = setTimeout(() => {
-          this.overlayActive = false
-        }, 3000)
-      },
-      hideOverlay() {
-        this.overlayActive = false
-      },
-      submit: async function (event) {
-        event.preventDefault()
-
-        if (!this.dataIsValid()) {
-          this.showOverlayTemporarily('Please enter a valid name for your drum pattern :)')
-          return
-        }
-
-        this.showOverlay('Sending…')
-
-        let byteArray = convertPatternToByteArray(this.pattern)
-        let encodedPattern = convertByteArrayToBase64EncodedString(byteArray)
-
-        try {
-          await postPattern(this.name, encodedPattern)
-          this.showOverlayTemporarily('Your drum pattern was added to the queue :)')
-        } catch (error) {
-          this.showOverlayTemporarily(error.message)
-        }
-      },
-      reset: function (event) {
-        event.preventDefault()
-
-        this.name = ''
-        this.pattern.forEach(instrument => {
-          instrument.notes.forEach(note => {
-            Vue.set(note, 'on', false)
-          })
+      this.name = ''
+      this.pattern.forEach(instrument => {
+        instrument.notes.forEach(note => {
+          Vue.set(note, 'on', false)
         })
-      }
+      })
     }
   }
+}
 </script>
 
 <style lang="scss">
@@ -297,13 +298,18 @@
   }
 
   input:invalid {
-    color: red;
+    color: #CE2D4F;
   }
 
   button {
-    background: #efefef;
+    background: #243bf3;
     border: 0;
+    color: #fff;
     padding: 0;
+  }
+
+  button.reset {
+    background: #ce2d4f;
   }
 
   button:hover {
