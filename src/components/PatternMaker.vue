@@ -83,8 +83,7 @@ const numberOfInstruments = 16
 const numberOfInstrumentsToOmmit = 4
 const numberOfBarsPerInstrument = 4
 const numberOfNotesPerBar = 4
-const numberOfDataPartsPerNote = 2
-const numberOfBytesInData = numberOfInstruments * numberOfBarsPerInstrument * numberOfNotesPerBar * numberOfDataPartsPerNote
+const numberOfBytesInData = numberOfInstruments * numberOfBarsPerInstrument * numberOfNotesPerBar
 const validNameRegularExpressionString = '^[a-zA-Z0-9 ]+$'
 const validNameRegularExpression = RegExp(validNameRegularExpressionString)
 
@@ -119,13 +118,10 @@ function convertPatternToByteArray (pattern) {
 
   pattern.forEach(instrument => {
     instrument.notes.forEach(note => {
-      // Note length is always 100%
+      // Velocity is always 100%
       ByteArray[i] = (note.on === true ? 0x7F : 0x00)
 
-      // Velocity is always 100%
-      ByteArray[i + 1] = (note.on === true ? 0x7F : 0x00)
-
-      i = i + 2
+      i++
     })
   })
 
