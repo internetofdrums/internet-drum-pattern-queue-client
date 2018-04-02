@@ -79,8 +79,7 @@
 <script>
 import Vue from 'vue'
 
-const numberOfInstruments = 16
-const numberOfInstrumentsToOmmit = 4
+const numberOfInstruments = 12
 const numberOfBarsPerInstrument = 4
 const numberOfNotesPerBar = 4
 const numberOfBytesInData = numberOfInstruments * numberOfBarsPerInstrument * numberOfNotesPerBar
@@ -92,7 +91,7 @@ let showOverlayTimeout
 function initPattern () {
   let instruments = []
 
-  for (let i = 0; i < numberOfInstruments - numberOfInstrumentsToOmmit; i++) {
+  for (let i = 0; i < numberOfInstruments; i++) {
     let notes = []
 
     for (let j = 0; j < numberOfBarsPerInstrument * numberOfNotesPerBar; j++) {
