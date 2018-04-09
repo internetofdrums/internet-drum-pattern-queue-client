@@ -16,13 +16,16 @@ export default {
 <style lang="scss">
   @import "~reset-css/_reset";
 
+  $black: #414042;
+  $white: #fff;
+
   html, body {
     height: 100%;
   }
 
   body {
-    background: #fff;
-    color: #000;
+    background: $white;
+    color: $black;
     font-size: 14px;
   }
 

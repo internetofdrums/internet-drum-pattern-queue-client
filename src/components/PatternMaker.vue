@@ -226,6 +226,15 @@ export default {
 </script>
 
 <style lang="scss">
+  $black: #414042;
+  $white: #fff;
+  $grey: lighten($black, 65%);
+  $grey-lighter: lighten($black, 70%);
+  $orange: #fd9840;
+  $brown: #86b189;
+  $green: #33b0a9;
+  $blue: #3b808d;
+
   @keyframes circle-grow {
     from {
       clip-path: circle(0% at 50% 50%);
@@ -246,7 +255,7 @@ export default {
 
   .overlay {
     align-items: center;
-    background: transparentize(#000, 0.8);
+    background: transparentize($black, 0.8);
     display: flex;
     height: 100vh;
     justify-content: center;
@@ -260,7 +269,7 @@ export default {
 
   .overlay-message {
     align-items: center;
-    background: #fff;
+    background: $white;
     border-radius: 5px;
     box-sizing: border-box;
     display: flex;
@@ -294,18 +303,18 @@ export default {
   }
 
   input:invalid {
-    color: #CE2D4F;
+    color: $orange;
   }
 
   button {
-    background: #243bf3;
+    background: $green;
     border: 0;
-    color: #fff;
+    color: $white;
     padding: 0;
   }
 
   button.reset {
-    background: #ce2d4f;
+    background: $orange;
   }
 
   button:hover {
@@ -313,7 +322,7 @@ export default {
   }
 
   button:disabled {
-    color: lighten(#000, 67%);
+    color: lighten($black, 67%);
     background: transparent;
   }
 
@@ -342,7 +351,7 @@ export default {
 
   .text-cell {
     align-self: center;
-    color: lighten(#000, 50%);
+    color: lighten($black, 50%);
     font-size: 0.75rem;
     text-align: center;
   }
@@ -355,7 +364,7 @@ export default {
   .text-cell:nth-child(6),
   .text-cell:nth-child(10),
   .text-cell:nth-child(14) {
-    color: lighten(#000, 33%);
+    color: lighten($black, 33%);
     font-weight: bold;
   }
 
@@ -364,7 +373,7 @@ export default {
   }
 
   .note label {
-    background: #efefef;
+    background: $grey;
     border-radius: 5px;
     display: block;
     height: 100%;
@@ -374,12 +383,17 @@ export default {
     width: 100%;
   }
 
+  .bar-2 label,
+  .bar-4 label {
+    background: $grey-lighter;
+  }
+
   .note label:hover {
     cursor: pointer;
   }
 
   .note label:after {
-    background: #243bf3;
+    background: $orange;
     border-radius: 5px;
     clip-path: circle(0 at 50% 50%);
     content: '';
@@ -391,15 +405,15 @@ export default {
   }
 
   .bar-2 label:after {
-    background: #705ff2;
+    background: $brown;
   }
 
   .bar-3 label:after {
-    background: #a379f0;
+    background: $green;
   }
 
   .bar-4 label:after {
-    background: #c994f0;
+    background: $blue;
   }
 
   .note input:not(:checked) + label:hover::after {
