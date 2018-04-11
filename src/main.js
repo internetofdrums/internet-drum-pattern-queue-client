@@ -1,5 +1,8 @@
 import Vue from 'vue'
+import VueRouter from 'vue-router'
 import App from './App'
+import PatternMaker from './components/PatternMaker'
+import Queue from './components/Queue'
 
 import './favicon/android-chrome-192x192.png'
 import './favicon/android-chrome-512x512.png'
@@ -16,9 +19,26 @@ import './favicon/mstile-310x310.png'
 import './favicon/safari-pinned-tab.svg'
 import './favicon/site.webmanifest'
 
+const routes = [
+  {
+    path: '/',
+    component: PatternMaker
+  },
+  {
+    path: '/queue',
+    component: Queue
+  }
+]
+
+const router = new VueRouter({
+  routes
+})
+
+Vue.use(VueRouter)
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
-  components: {App},
-  template: '<App/>'
+  render: h => h(App),
+  router: router
 })

@@ -1,17 +1,6 @@
 <template id="app">
-  <PatternMaker/>
+  <router-view></router-view>
 </template>
-
-<script>
-import PatternMaker from './components/PatternMaker'
-
-export default {
-  name: 'App',
-  components: {
-    PatternMaker
-  }
-}
-</script>
 
 <style lang="scss">
   @import "~reset-css/_reset";

@@ -230,10 +230,10 @@ export default {
   $white: #fff;
   $grey: lighten($black, 65%);
   $grey-lighter: lighten($black, 70%);
-  $orange: #FF9A1F;
-  $brown: #59A975;
-  $green: #1FB6B1;
-  $blue: #354D6A;
+  $orange: #ff9a1f;
+  $brown: #59a975;
+  $green: #1fb6b1;
+  $blue: #354d6a;
 
   @keyframes circle-grow {
     from {
